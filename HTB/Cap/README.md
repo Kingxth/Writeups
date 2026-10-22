@@ -248,7 +248,7 @@ root@cap:~# cat user.txt
 
 ### Images:
 
-
+![FTP Traffic Captured via PCAP](assets/cap_ftp.png)
  
 ### Versions:
 
